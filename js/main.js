@@ -48,6 +48,7 @@ function startLesson(id) {
   app.lesson = { id, step: 0, snap: JSON.parse(JSON.stringify(state)) };
   save(); device.render(); renderTray();
   checkLesson(); renderPanel();
+  $('#coach').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 function checkLesson() {
   const L = app.lesson && LESSONS.find(l => l.id === app.lesson.id), coach = $('#coach');
@@ -205,7 +206,7 @@ const cmds = {
 $('#view').addEventListener('click', async e => {
   const el = e.target.closest('[data-cmd]');
   if (!el || !cmds[el.dataset.cmd]) return;
-  await engine.ensure();
+  try { await engine.ensure(); } catch (err) { console.warn('Audio no disponible', err); }
   await cmds[el.dataset.cmd](+el.dataset.i, el);
   renderPanel(); hooks.changed();
 });

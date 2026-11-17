@@ -32,7 +32,7 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 20px; pa
 #device .blink { animation: blink .7s steps(2) infinite; }
 @keyframes blink { 50% { opacity: .35; } }
 
-#coach { display: flex; gap: 12px; align-items: center; justify-content: space-between; max-width: 780px; margin: 0 auto 10px; padding: 10px 14px; background: #fff7e8; border: 1.5px solid var(--orange); border-radius: 10px; }
+#coach { position: sticky; top: 8px; z-index: 5; scroll-margin-top: 8px; box-shadow: 0 4px 12px rgba(74, 51, 39, .2); display: flex; gap: 12px; align-items: center; justify-content: space-between; max-width: 780px; margin: 0 auto 10px; padding: 10px 14px; background: #fff7e8; border: 1.5px solid var(--orange); border-radius: 10px; }
 #coach[hidden] { display: none; }
 #coach p { margin: 2px 0 0; }
 #tray { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; max-width: 780px; margin: 12px auto 0; }
