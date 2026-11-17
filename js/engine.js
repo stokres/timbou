@@ -25,13 +25,19 @@ export class Engine {
     this.sessionRec = null; this.override = null; this.onChange = () => {};
   }
 
+  // Arranca el audio sin bloquear nunca la interfaz: si algo falla, la app sigue funcionando en silencio.
   async ensure() {
-    if (!this.ctx) { this.build(); await this.loadKit(state.kit); }
-    if (this.ctx.state === 'suspended') await this.ctx.resume();
+    if (this.broken) return;
+    if (!this.ctx) {
+      try { this.build(); } catch (err) { console.warn('Audio no disponible', err); this.ctx = null; this.broken = true; return; }
+      this.ready = this.loadKit(state.kit).catch(err => console.warn('No se pudo cargar el kit', err));
+    }
+    if (this.ctx.state !== 'running') this.ctx.resume().catch(() => {}); // sin await: en algunos navegadores no resuelve
+    await this.ready;
   }
 
   build() {
-    const c = this.ctx = new AudioContext({ latencyHint: 'interactive' });
+    const c = this.ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
     const G = v => { const g = c.createGain(); g.gain.value = v; return g; };
     this.master = G(0.6);
     this.lp = c.createBiquadFilter(); this.lp.type = 'lowpass'; this.lp.Q.value = 2;
@@ -39,9 +45,9 @@ export class Engine {
     const comp = c.createDynamicsCompressor();
     comp.threshold.value = -16; comp.ratio.value = 12; comp.attack.value = 0.003; comp.release.value = 0.12;
     this.out = G(0.8);
-    this.recDest = c.createMediaStreamDestination();
     this.master.connect(this.lp).connect(this.hp).connect(comp).connect(this.out);
-    this.out.connect(c.destination); this.out.connect(this.recDest);
+    this.out.connect(c.destination);
+    try { this.recDest = c.createMediaStreamDestination(); this.out.connect(this.recDest); } catch { this.recDest = null; }
 
     this.delayIn = G(1); this.delay = c.createDelay(2);
     const fb = G(0.42), fbLp = c.createBiquadFilter(); fbLp.type = 'lowpass'; fbLp.frequency.value = 3000;
@@ -49,10 +55,10 @@ export class Engine {
     this.delay.connect(G(0.8)).connect(this.master);
 
     this.revIn = G(1);
-    const conv = c.createConvolver(), ir = c.createBuffer(2, SR * 2.2, SR);
+    const conv = c.createConvolver(), rate = c.sampleRate, ir = c.createBuffer(2, Math.floor(rate * 2.2), rate);
     for (let ch = 0; ch < 2; ch++) {
       const d = ir.getChannelData(ch);
-      for (let i = 0; i < d.length; i++) d[i] = i < 400 ? 0 : (Math.random() * 2 - 1) * Math.exp(-i / (SR * 0.5));
+      for (let i = 0; i < d.length; i++) d[i] = i < 400 ? 0 : (Math.random() * 2 - 1) * Math.exp(-i / (rate * 0.5));
     }
     conv.buffer = ir;
     this.revIn.connect(conv).connect(G(0.7)).connect(this.master);
@@ -116,7 +122,7 @@ export class Engine {
 
   trigger(ch, time, side = state.ch[ch].side) {
     const b = this.buf[ch]?.[side];
-    if (!b) return;
+    if (!b || !this.ctx) return;
     const src = this.ctx.createBufferSource();
     src.buffer = b; src.playbackRate.value = Math.pow(2, state.ch[ch].pitch / 12);
     src.connect(this.ch[ch].gain); src.start(time ?? this.ctx.currentTime);
@@ -151,7 +157,7 @@ export class Engine {
     this.loopSrc = [];
     this.onChange();
   }
-  async toggle() { await this.ensure(); this.playing ? this.stop() : this.start(); this.onChange(); }
+  async toggle() { await this.ensure(); if (!this.ctx) return; this.playing ? this.stop() : this.start(); this.onChange(); }
 
   pump() {
     while (this.playing && this.nextTime < this.ctx.currentTime + 0.12) {
@@ -205,6 +211,7 @@ export class Engine {
   // Juego/tutorial: escuchar un patrón objetivo sin tocar el tuyo.
   async playTarget(grid, cycles = 2) {
     await this.ensure();
+    if (!this.ctx) return;
     if (this.playing) this.stop();
     this.override = { grid, cycles };
     this.start(); this.onChange();
@@ -220,6 +227,7 @@ export class Engine {
 
   async micStart(ch) {
     await this.ensure();
+    if (!this.ctx) throw new Error('sin audio');
     const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
     const rec = new MediaRecorder(stream), chunks = [];
     rec.ondataavailable = e => chunks.push(e.data);
@@ -241,6 +249,7 @@ export class Engine {
 
   async loadFile(ch, file) {
     await this.ensure();
+    if (!this.ctx) throw new Error('sin audio');
     const { data, sr } = await this.decode(await file.arrayBuffer(), 8);
     if (!data.length) throw new Error('Audio vacío');
     await this.setCustom(ch, state.ch[ch].side, data, sr, file.name.replace(/\.[^.]+$/, '').slice(0, 24));
@@ -250,6 +259,7 @@ export class Engine {
   // Resamplea un ciclo del patrón (sin efectos) a un canal de loop.
   async resample(slot) {
     await this.ensure();
+    if (!this.ctx) return;
     const sd = 60 / state.bpm / 4, steps = state.length * 2;
     const oc = new OfflineAudioContext(2, Math.ceil(steps * sd * SR), SR);
     for (let t = 0; t < steps; t++) {
@@ -268,6 +278,7 @@ export class Engine {
   // --- Grabación de sesión ---
   async toggleSession() {
     await this.ensure();
+    if (!this.recDest) return;
     if (this.sessionRec) { this.sessionRec.stop(); return; }
     const rec = new MediaRecorder(this.recDest.stream), chunks = [];
     rec.ondataavailable = e => chunks.push(e.data);

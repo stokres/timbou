@@ -48,7 +48,10 @@ function db() {
     r.onerror = () => rej(r.error);
   });
 }
-const tx = async (mode, fn) => {
+// Con límite de tiempo: en algunos navegadores IndexedDB se queda colgado sin dar error.
+let dead = false;
+const tx = (mode, fn) => dead ? Promise.resolve() : Promise.race([txRaw(mode, fn), new Promise(res => setTimeout(() => { dead = true; res(); }, 700))]);
+const txRaw = async (mode, fn) => {
   const d = await db();
   return new Promise((res, rej) => {
     const rq = fn(d.transaction('kv', mode).objectStore('kv'));

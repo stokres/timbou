@@ -126,7 +126,8 @@ export function createDevice(svg, engine, hooks) {
   }
 
   async function click(d, ev) {
-    await engine.ensure();
+    const audio = engine.ensure().catch(err => console.warn('Audio no disponible', err));
+    if (d.act !== 'cell') await audio; // colocar Beats nunca espera al audio
     const s = state, { act, i } = d, now = Date.now();
     const dbl = ui.last && ui.last.act === act && ui.last.i === i && now - ui.last.t < 350;
     ui.last = { act, i, t: now };
@@ -136,7 +137,8 @@ export function createDevice(svg, engine, hooks) {
       const g2 = s.grid.map(r => [...r]); g2[d.r][d.c] = next;
       if (beatCount(g2) > MAX_BEATS) { flash('30'); hooks.toast(`Solo hay ${MAX_BEATS} Beats en la caja. Quita alguno para colocar más.`); return; }
       s.grid = g2;
-      if (next && !engine.playing) engine.trigger(d.r);
+      if (next && !engine.playing) audio.then(() => engine.trigger(d.r));
+      engine.apply(); hooks.changed(); return;
     } else if (act === 'mute') s.ch[i].mute = !s.ch[i].mute;
     else if (act === 'flip') {
       if (engine.micRec) { engine.micStop(); return; }

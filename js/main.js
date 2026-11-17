@@ -212,7 +212,10 @@ $('#view').addEventListener('click', async e => {
 });
 
 document.addEventListener('keydown', e => {
-  if (e.code === 'Space' && !/INPUT|TEXTAREA|BUTTON/.test(document.activeElement?.tagName || '')) { e.preventDefault(); engine.toggle(); }
+  if (e.code === 'Space' && !/INPUT|TEXTAREA|BUTTON/.test(document.activeElement?.tagName || '')) { e.preventDefault(); engine.toggle().then(() => { if (engine.broken) toast('Este navegador no deja iniciar el audio.'); }); }
 });
+
+// Desbloquea el audio en el primer gesto real (algunos navegadores solo lo permiten ahí).
+for (const ev of ['pointerdown', 'touchend', 'click', 'keydown']) document.addEventListener(ev, () => { engine.ensure(); }, { capture: true, passive: true });
 
 device.render(); renderTray(); renderPanel(); checkLesson();
