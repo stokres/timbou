@@ -21,7 +21,7 @@ export const LESSONS = [
   },
   {
     id: 'groove', title: 'Tempo, swing y longitud', steps: [
-      { text: 'Arrastra el dial grande hacia arriba o abajo para cambiar el tempo. Llévalo por encima de 130 BPM.', check: c => c.s.bpm > 130 },
+      { text: 'Arrastra el dial grande hacia arriba o a la derecha para subir el tempo. Llévalo por encima de 130 BPM.', check: c => c.s.bpm > 130 },
       { text: 'Haz clic en la pantalla hasta que marque SWING y sube el swing a 50 o más.', check: c => c.s.swing >= 50 },
       { text: 'Clic otra vez en la pantalla (PASOS) y reduce el patrón a 6 columnas o menos: compases de 3/4, 6/8…', check: c => c.s.length <= 6 },
       { text: 'Devuelve el patrón a 8 columnas.', check: c => c.s.length === 8 },

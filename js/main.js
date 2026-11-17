@@ -124,7 +124,7 @@ const views = {
       <li><b>Botón de efectos</b> (abajo a la derecha): decide qué controlan los diales — ${FX.join(', ')}. Tono: ±24 semitonos.</li>
       <li><b>Dial de filtro:</b> a la izquierda paso bajo, a la derecha paso alto.</li>
       <li><b>Transporte:</b> play/pausa, grabar sesión (descarga audio) y selector de kit.</li>
-      <li><b>Pantalla + dial grande:</b> clic para alternar BPM / swing / pasos; arrastra o usa la rueda para ajustar.</li>
+      <li><b>Pantalla + dial grande:</b> clic para alternar BPM / swing / pasos. Los diales se arrastran: arriba o derecha sube, abajo o izquierda baja (también con la rueda).</li>
       <li><b>Cuatro botones de loop:</b> acompañamientos sincronizados; se pueden sustituir por un resample del patrón.</li>
       <li><b>Sampler:</b> pulsa la cápsula del micro y después el botón de un canal para grabar (máx. 5 s).</li>
       <li>Doble clic en un dial lo restablece. Barra espaciadora: play/pausa.</li>

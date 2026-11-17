@@ -97,7 +97,31 @@ export function createDevice(svg, engine, hooks) {
     return o;
   }
 
-  function render() { svg.innerHTML = build(); }
+  // Dos capas: la visual se redibuja entera; la de zonas táctiles es fija, para que el elemento
+  // que recibe el dedo o el ratón nunca desaparezca a mitad de un gesto.
+  function hits() {
+    const h = (shape, act, title, extra = '', cls = 'btn') => `<${shape} data-act="${act}" ${extra} class="hit ${cls}"><title>${title}</title></${shape.split(' ')[0]}>`;
+    const circ = (x, y, r) => `circle cx="${x}" cy="${y}" r="${r}"`, rect = (x, y, w, hh) => `rect x="${x}" y="${y}" width="${w}" height="${hh}"`;
+    let o = '';
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) o += h(rect(X0 + CW * c, Y0 + RH * r, CW, RH), 'cell', 'Colocar o quitar un Beat', `data-r="${r}" data-c="${c}"`, 'cellhit');
+    for (let r = 0; r < ROWS; r++) {
+      o += h(circ(42, rowY(r), 17), 'mute', `Mute canal ${r + 1}`, `data-i="${r}"`);
+      o += h(circ(597, rowY(r), 17), 'flip', `Sample A/B canal ${r + 1}. Con el sampler armado: grabar aquí`, `data-i="${r}"`);
+      o += h(circ(648, rowY(r), 24), 'knob', `Dial del canal ${r + 1}: arrastra arriba/abajo o a los lados; clic para escuchar`, `data-i="${r}"`, 'knob');
+    }
+    o += h(circ(622, 75, 26), 'vol', 'Volumen general', '', 'knob');
+    o += h(circ(648, 480, 24), 'filter', 'Filtro: izquierda paso bajo, derecha paso alto, centro apagado', '', 'knob');
+    o += h(circ(478, 495, 40), 'tempo', 'Dial principal: arrastra para ajustar; clic para cambiar BPM / swing / pasos', '', 'knob');
+    o += h(circ(648, 538, 16), 'fx', 'Efectos: cambia lo que controlan los diales de canal');
+    o += h(rect(580, 504, 34, 50), 'mic', 'Sampler: pulsa y luego el botón de un canal para grabar del micro');
+    o += h(rect(70, 492, 34, 35), 'play', 'Play / Pausa (espacio)') + h(rect(106, 492, 34, 35), 'rec', 'Grabar sesión') + h(rect(142, 492, 34, 35), 'kit', 'Selector de kit (Mayús+clic: anterior)');
+    o += h(rect(196, 493, 60, 32), 'display', 'Pantalla: clic para cambiar entre BPM, swing y pasos');
+    for (let i = 0; i < 4; i++) o += h(circ(424 + i * 35.6, 540, 15), 'loop', `Loop ${i + 1}`, `data-i="${i}"`);
+    return o;
+  }
+  svg.innerHTML = `<g id="vis" pointer-events="none"></g><g id="hits">${hits()}</g>`;
+  const vis = svg.querySelector('#vis');
+  function render() { vis.innerHTML = build(); }
 
   const startVal = (act, i) => act === 'knob' ? [state.ch[i].vol, state.ch[i].pitch, state.ch[i].delay, state.ch[i].reverb][state.fxMode]
     : act === 'filter' ? state.filter : act === 'vol' ? state.volume : act === 'tempo' ? [state.bpm, state.swing, state.length][state.knobMode] : null;
@@ -156,22 +180,28 @@ export function createDevice(svg, engine, hooks) {
     engine.apply(); hooks.changed();
   }
 
+  const onMove = e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const d = (e.clientX - drag.x) + (drag.y - e.clientY); // arriba o a la derecha = más
+    if (drag.v0 === null) return;
+    if (Math.abs(d) > 4) drag.moved = true;
+    if (drag.moved) setVal(drag.act, drag.i, drag.v0, d);
+  };
+  const onUp = e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const d = drag; drag = null;
+    window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); window.removeEventListener('pointercancel', onUp);
+    if (e.type === 'pointerup' && !d.moved) click(d, e);
+  };
   svg.addEventListener('pointerdown', e => {
     const el = e.target.closest('[data-act]');
-    if (!el) return;
+    if (!el || drag) return;
     e.preventDefault();
     const act = el.dataset.act, i = +el.dataset.i || 0;
-    drag = { act, i, r: +el.dataset.r, c: +el.dataset.c, y: e.clientY, moved: false, v0: startVal(act, i), btn: e.button };
-    svg.setPointerCapture(e.pointerId);
+    drag = { id: e.pointerId, act, i, r: +el.dataset.r, c: +el.dataset.c, x: e.clientX, y: e.clientY, moved: false, v0: startVal(act, i), btn: e.button };
+    try { el.setPointerCapture(e.pointerId); } catch { /* sin captura: bastan los listeners de window */ }
+    window.addEventListener('pointermove', onMove); window.addEventListener('pointerup', onUp); window.addEventListener('pointercancel', onUp);
   });
-  svg.addEventListener('pointermove', e => {
-    if (!drag || drag.v0 === null) return;
-    const dy = drag.y - e.clientY;
-    if (Math.abs(dy) > 3) drag.moved = true;
-    if (drag.moved) setVal(drag.act, drag.i, drag.v0, dy);
-  });
-  svg.addEventListener('pointerup', e => { const d = drag; drag = null; if (d && !d.moved) click(d, e); });
-  svg.addEventListener('pointercancel', () => { drag = null; });
   svg.addEventListener('contextmenu', e => e.preventDefault());
   svg.addEventListener('wheel', e => {
     const el = e.target.closest('[data-act]');
