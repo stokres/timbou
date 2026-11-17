@@ -8,7 +8,7 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const engine = new Engine();
 const app = { tab: 'lib', lesson: null, level: 0, gameMsg: '', ear: -1, earStreak: 0, earMsg: '' };
-window.tembo = { engine, state, app }; // para trastear desde la consola
+window.timbou = { engine, state, app }; // para trastear desde la consola
 
 let toastTimer;
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 3200); }
@@ -84,12 +84,15 @@ const views = {
     <div class="chips locked">${ANNOUNCED_PACKS.map(p => `<span>${p}</span>`).join('')}</div>`,
 
   ch: () => `
+    <h3>Efecto <small>uno a la vez, como en el selector de FX</small></h3>
+    <div class="chips">${FX.map((f, i) => `<button class="${i === state.fxSel ? 'on' : ''}" data-cmd="fxsel" data-i="${i}">${f}</button>`).join('')}</div>
+    <div class="sliders">${slider('Cantidad global', 'fxAmt', 0, 0, 1, 0.01, state.fxAmt)}</div>
     <h3>Canales <small>kit ${state.kit + 1}: ${KITS[state.kit].name}</small></h3>
     ${state.ch.map((c, r) => {
       const nm = s => engine.names[r] ? esc(engine.names[r][s]) + (engine.custom[r][s] ? ' ★' : '') : KITS[state.kit].sounds[r][s].name;
       return `<div class="chrow"><div class="chhead"><b>${r + 1}</b><span class="${c.side === 0 ? 'sel' : ''}">A: ${nm(0)}</span><span class="${c.side === 1 ? 'sel' : ''}">B: ${nm(1)}</span></div>
       <div class="row"><button data-cmd="aud" data-i="${r}">▶ Escuchar</button><label class="filebtn">Cargar audio<input type="file" accept="audio/*" data-file="sample" data-i="${r}"></label><button data-cmd="recch" data-i="${r}">${engine.micCh === r ? '■ Parar' : '● Grabar'}</button>${engine.custom[r]?.[c.side] ? `<button data-cmd="restore" data-i="${r}">Restaurar</button>` : ''}</div>
-      <div class="sliders">${slider('Vol', 'vol', r, 0, 1, 0.01, c.vol)}${slider('Tono', 'pitch', r, -24, 24, 1, c.pitch)}${slider('Delay', 'delay', r, 0, 1, 0.01, c.delay)}${slider('Reverb', 'reverb', r, 0, 1, 0.01, c.reverb)}</div></div>`;
+      <div class="sliders">${slider('Volumen', 'vol', r, 0, 1, 0.01, c.vol)}${slider('FX · ' + FX[state.fxSel].toLowerCase(), 'fx', r, 0, 1, 0.01, c.fx)}</div></div>`;
     }).join('')}
     <p class="muted">Cargar o grabar sustituye el sample seleccionado (A o B) de ese canal en este kit. ★ = sample propio.</p>
     <h3>Loops <small>4 canales de acompañamiento</small></h3>
@@ -115,23 +118,24 @@ const views = {
   },
 
   guide: () => `
-    <h3>Cómo se toca</h3>
+    <h3>Controles</h3>
     <ul class="guide">
-      <li><b>Rejilla 8×5.</b> Cada fila es un canal (instrumento) y cada columna, dos semicorcheas: 16 pasos en total.</li>
-      <li><b>Beat</b> = primera semicorchea · <b>Volteado</b> = segunda · <b>Apilado</b> = las dos. Hay 30 Beats, como en la caja real. Clic derecho quita un Beat.</li>
-      <li><b>Izquierda de la rejilla:</b> mute por canal.</li>
-      <li><b>Derecha de la rejilla:</b> sample flip (A/B) y, a su lado, un dial por canal.</li>
-      <li><b>Botón de efectos</b> (abajo a la derecha): decide qué controlan los diales — ${FX.join(', ')}. Tono: ±24 semitonos.</li>
-      <li><b>Dial de filtro:</b> a la izquierda paso bajo, a la derecha paso alto.</li>
-      <li><b>Transporte:</b> play/pausa, grabar sesión (descarga audio) y selector de kit.</li>
-      <li><b>Pantalla + dial grande:</b> clic para alternar BPM / swing / pasos. Los diales se arrastran: arriba o derecha sube, abajo o izquierda baja (también con la rueda).</li>
-      <li><b>Cuatro botones de loop:</b> acompañamientos sincronizados; se pueden sustituir por un resample del patrón.</li>
-      <li><b>Sampler:</b> pulsa la cápsula del micro y después el botón de un canal para grabar (máx. 5 s).</li>
-      <li>Doble clic en un dial lo restablece. Barra espaciadora: play/pausa.</li>
+      <li><b>Rejilla 8×5.</b> Cada fila es un canal y cada columna, dos semicorcheas: 16 pasos. Debajo, los indicadores de paso.</li>
+      <li><b>Beat</b> = primera semicorchea · <b>Volteado</b> = segunda · <b>Apilado</b> = las dos. Hay 30 Beats. Clic derecho quita uno.</li>
+      <li><b>Channel on/off</b> (izquierda): enciende o apaga cada canal. Mantenlo pulsado y gira <b>Volumen</b> para el volumen de ese canal. Con ratón: mantén la tecla 1–5 o arrastra sobre el propio botón.</li>
+      <li><b>Sample assign/flip</b> (derecha): alterna los dos samples del canal; con el sampler armado, elige en qué canal se graba.</li>
+      <li><b>Channel FX dry-wet:</b> un dial por canal con la mezcla del efecto elegido.</li>
+      <li><b>FX selector</b> (dial con pico): ${FX.join(', ')}. <b>Global FX amount</b> (debajo): el parámetro del efecto.</li>
+      <li><b>Play/Stop</b> (verde), <b>Record session</b> (descarga el audio al parar) y <b>BPM/Swing</b> (dial pequeño; con Shift, swing).</li>
+      <li><b>Kit selector</b> (dial grande): 8 kits. Con Shift, número de pasos del patrón.</li>
+      <li><b>Loops on/off:</b> cuatro acompañamientos sincronizados; se pueden sustituir por un resample del patrón.</li>
+      <li><b>Sampler:</b> pulsa la cápsula y después el botón de un canal para grabar del micro (máx. 5 s).</li>
+      <li><b>Shift:</b> la pestaña del lateral izquierdo (clic para fijarlo) o la tecla Mayús.</li>
+      <li>Los diales se arrastran: arriba o derecha sube. Doble clic los restablece. Espacio: play/stop.</li>
     </ul>
     <h3>Qué es esto</h3>
-    <p>Una recreación personal y no oficial para practicar mientras llega el Studio de Musical Beings. Los sonidos se sintetizan aquí; no contiene samples ni contenido de Tembo.</p>
-    <p class="muted">Confirmado por fuentes públicas: rejilla 8×5, Beat/volteado/apilado, 5 canales con volumen, tono (±24) y envíos a delay y reverb, 2 samples por canal, 8 kits, 4 canales de loop, resampleo, swing, longitud de patrón, filtro, mute, sampler y grabación de sesión. Es interpretación mía: qué botón físico hace cada cosa en el diseño nuevo, la selección por modos y el contenido concreto de kits, loops y lecciones. Detalle en <a href="docs/RESEARCH.md" target="_blank">docs/RESEARCH.md</a>.</p>`,
+    <p>timbou es una recreación personal y no oficial para practicar. Los sonidos se sintetizan aquí; no contiene samples ni contenido del fabricante.</p>
+    <p class="muted">La posición y el nombre de cada control siguen el diagrama oficial del modelo A-001. Sigue siendo interpretación mía: qué efectos hay en el selector y qué hace exactamente la cantidad global, que Shift + BPM sea swing y Shift + kit los pasos, y el contenido de kits, loops y lecciones. Detalle en <a href="docs/RESEARCH.md" target="_blank">docs/RESEARCH.md</a>.</p>`,
 };
 
 function renderPanel() {
@@ -142,7 +146,7 @@ function renderPanel() {
 }
 function syncPanel() {
   document.querySelectorAll('#view [data-bind]').forEach(el => {
-    const b = el.dataset.bind, v = b === 'loopVol' ? state.loopVol : state.ch[+el.dataset.i][b];
+    const b = el.dataset.bind, v = b in state ? state[b] : state.ch[+el.dataset.i][b];
     if (document.activeElement !== el && +el.value !== v) el.value = v;
   });
   document.querySelectorAll('#view [data-cmd="loop"]').forEach(el => { el.checked = state.loops[+el.dataset.i]; });
@@ -153,7 +157,7 @@ $('#tabs').addEventListener('click', e => { if (e.target.dataset.tab) { app.tab 
 $('#view').addEventListener('input', e => {
   const el = e.target, b = el.dataset.bind;
   if (!b) return;
-  if (b === 'loopVol') state.loopVol = +el.value; else state.ch[+el.dataset.i][b] = +el.value;
+  if (b in state) state[b] = +el.value; else state.ch[+el.dataset.i][b] = +el.value;
   engine.apply(); save(); device.render(); checkLesson();
 });
 
@@ -172,14 +176,15 @@ $('#view').addEventListener('change', async e => {
 
 const cmds = {
   kit: i => hooks.setKit(i),
+  fxsel(i) { state.fxSel = i; engine.apply(); },
   async pat(i) { const p = PATTERNS[i]; state.grid = parseGrid(p.rows); state.bpm = p.bpm; state.swing = p.swing; state.length = 8; await hooks.setKit(p.kit); },
   savepat() { const name = $('#pname').value.trim() || `Patrón ${state.saved.length + 1}`; state.saved.push({ name, ...snapshot() }); $('#pname').value = ''; toast(`Guardado «${name}».`); },
   async loadpat(i) { applySnapshot(JSON.parse(JSON.stringify(state.saved[i]))); await hooks.setKit(state.kit); },
   delpat(i) { state.saved.splice(i, 1); },
   export() {
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([JSON.stringify({ app: 'tembo-studio-no-oficial', version: 1, pattern: snapshot() }, null, 2)], { type: 'application/json' }));
-    a.download = 'tembo-patron.json'; a.click();
+    a.href = URL.createObjectURL(new Blob([JSON.stringify({ app: 'timbou', version: 2, pattern: snapshot() }, null, 2)], { type: 'application/json' }));
+    a.download = 'timbou-patron.json'; a.click();
   },
   clear() { state.grid = emptyGrid(); },
   aud: i => engine.trigger(i),

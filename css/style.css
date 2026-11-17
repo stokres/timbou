@@ -13,19 +13,18 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 20px; pa
 
 .stage { min-width: 0; }
 #device { width: 100%; max-width: 780px; display: block; margin: 0 auto; touch-action: none; user-select: none; -webkit-user-select: none; filter: drop-shadow(0 6px 14px rgba(74, 51, 39, .25)); }
-#device .body { fill: var(--wood); stroke: var(--line); stroke-width: 1.6; }
-#device .ln { stroke: var(--line); stroke-width: 1.2; fill: none; }
-#device .grid { fill: #ecd3aa; stroke: var(--line); stroke-width: 1.6; }
-#device .off { fill: rgba(74, 51, 39, .22); }
-#device .playcol { fill: rgba(232, 116, 42, .16); }
-#device .logo { font: 800 27px system-ui, sans-serif; fill: var(--ink); letter-spacing: -1px; }
-#device .tiny { font: 700 6.5px system-ui, sans-serif; fill: var(--ink); letter-spacing: .3px; }
-#device .mid, #device .icon, #device .seg, #device .kitn { text-anchor: middle; }
-#device .icon { font-size: 11px; fill: var(--ink); }
-#device .seg { font: 700 19px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: #ffb070; letter-spacing: 2px; }
-#device .kitn { font: 700 10px system-ui, sans-serif; fill: #f6ecd9; pointer-events: none; }
-#device .arc-bg { stroke: #c9a876; stroke-width: 2.4; fill: none; stroke-linecap: round; }
-#device .arc { stroke: var(--ink); stroke-width: 2.4; fill: none; stroke-linecap: round; }
+#device .body { fill: #e2bf8c; stroke: #6b4a30; stroke-width: 1.6; }
+#device .ln { stroke: #6b4a30; stroke-width: 1.2; fill: none; }
+#device .ln.thin { stroke-width: .8; opacity: .7; }
+#device .ln.tickon { stroke: #f0a030; stroke-width: 3; stroke-linecap: round; }
+#device .off { fill: rgba(60, 40, 25, .38); }
+#device .playcol { fill: rgba(255, 255, 255, .28); }
+#device .logo { font: 800 27px system-ui, sans-serif; fill: #3d2c22; letter-spacing: -1px; }
+#device .tiny { font: 700 6.5px system-ui, sans-serif; fill: #3d2c22; letter-spacing: .3px; }
+#device .mid, #device .icon, #device .seg { text-anchor: middle; }
+#device .icon { font-size: 11px; fill: #3d2c22; }
+#device .seg { font: 700 19px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: #fff3d6; letter-spacing: 2px; }
+#device .arc { stroke: #f0a030; stroke-width: 3; fill: none; stroke-linecap: round; }
 #device .hit { fill: transparent; }
 #device .knob { cursor: grab; }
 #device .cellhit:hover { fill: rgba(255, 255, 255, .18); }
@@ -39,9 +38,9 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 20px; pa
 #tray { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; max-width: 780px; margin: 12px auto 0; }
 .tool { display: flex; align-items: center; gap: 8px; text-align: left; }
 .tool small { display: block; color: var(--muted); font-size: 11px; }
-.chip { width: 22px; height: 22px; border-radius: 50%; flex: none; background: #4d4039; }
-.chip.c3 { box-shadow: 3px 3px 0 #2a211d; }
-.chip.c2 { background: radial-gradient(#4d4039 0 28%, #c79c6b 30%); border: 3px solid #4d4039; }
+.chip { width: 22px; height: 22px; border-radius: 50%; flex: none; background: #8b6446; }
+.chip.c3 { box-shadow: 3px 3px 0 #6a4a33; }
+.chip.c2 { background: radial-gradient(#5a4030 0 28%, #d0ad84 30%); border: 3px solid #6a4a33; }
 .chip.c0 { background: none; border: 2px dashed var(--muted); }
 .count { margin-left: auto; color: var(--muted); }
 

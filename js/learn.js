@@ -7,7 +7,7 @@ export const LESSONS = [
   {
     id: 'first', title: 'Tu primer ritmo', steps: [
       { text: 'Coloca un Beat en la fila de abajo (el bombo), en la primera columna.', check: c => [1, 3].includes(c.s.grid[4][0]) },
-      { text: 'Pulsa Play: el botón de la izquierda de la caja de transporte (o la barra espaciadora).', check: c => c.e.playing },
+      { text: 'Pulsa Play: el botón verde (o la barra espaciadora).', check: c => c.e.playing },
       { text: 'Añade bombo también en las columnas 3, 5 y 7. Eso es un «four on the floor».', check: c => [0, 2, 4, 6].every(k => [1, 3].includes(c.s.grid[4][k])) },
       { text: 'Pon una caja (cuarta fila) en las columnas 3 y 7.', check: c => [2, 6].every(k => c.s.grid[3][k] > 0) },
     ],
@@ -20,32 +20,38 @@ export const LESSONS = [
     ],
   },
   {
-    id: 'groove', title: 'Tempo, swing y longitud', steps: [
-      { text: 'Arrastra el dial grande hacia arriba o a la derecha para subir el tempo. Llévalo por encima de 130 BPM.', check: c => c.s.bpm > 130 },
-      { text: 'Haz clic en la pantalla hasta que marque SWING y sube el swing a 50 o más.', check: c => c.s.swing >= 50 },
-      { text: 'Clic otra vez en la pantalla (PASOS) y reduce el patrón a 6 columnas o menos: compases de 3/4, 6/8…', check: c => c.s.length <= 6 },
-      { text: 'Devuelve el patrón a 8 columnas.', check: c => c.s.length === 8 },
+    id: 'groove', title: 'Tempo, swing y pasos', steps: [
+      { text: 'El dial pequeño junto al botón de grabar es el BPM. Arrástralo hacia arriba o a la derecha hasta pasar de 130.', check: c => c.s.bpm > 130 },
+      { text: 'Activa Shift (la pestaña del lateral izquierdo, o mantén la tecla Mayús) y gira ese mismo dial: ahora es el swing. Súbelo a 50 o más.', check: c => c.s.swing >= 50 },
+      { text: 'Con Shift activo, gira el dial grande para acortar el patrón a 6 columnas o menos: compases de 3/4, 6/8…', check: c => c.s.length <= 6 },
+      { text: 'Devuelve el patrón a 8 columnas y desactiva Shift.', check: c => c.s.length === 8 },
     ],
   },
   {
-    id: 'channels', title: 'Canales y efectos', steps: [
-      { text: 'Silencia un canal con los botones de la izquierda de la rejilla.', check: c => c.s.ch.some(x => x.mute) },
-      { text: 'Cada canal tiene dos samples. Cambia alguno al sample B con los botones de la derecha de la rejilla.', check: c => c.s.ch.some(x => x.side === 1) },
-      { text: 'Pulsa el botón de efectos (abajo a la derecha) hasta ver TONO y gira el dial de un canal para afinarlo.', check: c => c.s.ch.some(x => x.pitch !== 0) },
-      { text: 'Pasa a DELAY y manda un canal al delay por encima del 30 %.', check: c => c.s.ch.some(x => x.delay > 0.3) },
-      { text: 'Gira el dial de filtro (encima del botón de efectos) hacia cualquier lado.', check: c => c.s.filter !== 0 },
+    id: 'channels', title: 'Canales', steps: [
+      { text: 'Apaga un canal con los botones de la izquierda de la rejilla (Channel on/off).', check: c => c.s.ch.some(x => x.mute) },
+      { text: 'Volumen de canal: mantén pulsado el botón de un canal mientras giras el dial de Volumen (arriba a la derecha). Con ratón, mantén la tecla 1–5 del canal o arrastra sobre el propio botón. Baja un canal por debajo del 50 %.', check: c => c.s.ch.some(x => x.vol < 0.5) },
+      { text: 'Cada canal tiene dos samples. Cambia alguno al sample B con los botones de la derecha de la rejilla (Sample assign/flip).', check: c => c.s.ch.some(x => x.side === 1) },
+    ],
+  },
+  {
+    id: 'fx', title: 'Efectos', steps: [
+      { text: 'Gira el selector de FX (el dial con pico, abajo a la derecha) hasta REVERB.', check: c => c.s.fxSel === 1 },
+      { text: 'Sube el dial de FX de un canal (columna derecha) por encima del 30 %: es la mezcla de ese canal con el efecto.', check: c => c.s.ch.some(x => x.fx > 0.3) },
+      { text: 'Mueve el dial de cantidad global (abajo del todo a la derecha): en la reverb cambia la duración.', check: c => Math.abs(c.s.fxAmt - c.snap.fxAmt) > 0.15 },
+      { text: 'Pasa el selector a TONO. Ahora el dial global fija el intervalo y el de cada canal cuánto se aplica.', check: c => c.s.fxSel === 2 },
     ],
   },
   {
     id: 'kits', title: 'Kits y loops', steps: [
-      { text: 'Cambia de kit con el tercer botón de transporte (el que muestra un número).', check: c => c.s.kit !== c.snap.kit },
+      { text: 'Gira el dial grande (selector de kit) para cambiar de kit.', check: c => c.s.kit !== c.snap.kit },
       { text: 'Activa un loop de acompañamiento con los cuatro botones bajo el dial grande.', check: c => c.s.loops.some(Boolean) },
       { text: 'Activa al menos tres loops a la vez y dale a Play.', check: c => c.s.loops.filter(Boolean).length >= 3 && c.e.playing },
     ],
   },
   {
     id: 'sampler', title: 'El sampler', steps: [
-      { text: 'Pulsa el botón del sampler (la cápsula con el micro): los botones de canal parpadean.', check: c => c.e.micArmed || c.e.micRec || c.e.hasCustom() },
+      { text: 'Pulsa el botón del sampler (la cápsula junto al micro): los botones de asignación de canal parpadean.', check: c => c.e.micArmed || c.e.micRec || c.e.hasCustom() },
       { text: 'Pulsa el botón de un canal (columna derecha) y haz un sonido; vuelve a pulsar para parar. También puedes cargar un archivo desde la pestaña Canales.', check: c => c.e.hasCustom() },
     ],
   },
@@ -65,7 +71,7 @@ export const diffCount = (a, b) => a.flat().reduce((n, v, i) => n + (v !== b.fla
 
 const V = 'https://s3.amazonaws.com/webflow-prod-assets/69b688cfeed3eb70897a8d30/';
 export const VIDEOS = [
-  ['Tembo Features Demo (oficial)', V + '69b8666a477d41700d67ce91_Tembo%20Features%20Demo.mp4'],
+  ['Demo de funciones (vídeo oficial)', V + '69b8666a477d41700d67ce91_Tembo%20Features%20Demo.mp4'],
   ['Damian Kulash (OK Go)', V + '69b974a2d3818133a91e12d5_%40damiankulash.mp4'],
   ['Taetro', V + '69b973abe3c93e1713f234c1_%40taetro.mp4'],
   ['Cloudchord', V + '69b973a1fc3188b5762a4b21_%40cloudchord.mp4'],

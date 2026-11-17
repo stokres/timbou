@@ -1,6 +1,6 @@
-# Tembo Studio (no oficial)
+# timbou
 
-Recreación personal del Studio de Musical Beings para practicar con un Tembo virtual antes de que llegue la beta oficial. No está afiliada a Musical Beings ni contiene sus samples: todos los sonidos se sintetizan en el navegador.
+Secuenciador magnético virtual para el navegador: una recreación personal y no oficial para practicar antes de tener el instrumento real. No está afiliada al fabricante ni contiene sus samples: todos los sonidos se sintetizan en el navegador.
 
 ## Cómo abrirlo
 
@@ -10,26 +10,33 @@ Es una web estática sin dependencias ni compilación. Los módulos de JavaScrip
 python3 -m http.server 8000
 ```
 
-y abre `http://localhost:8000`. También funciona con GitHub Pages sirviendo la raíz de `main`. Usa Chrome, Edge, Firefox o Safari recientes.
+y abre `http://localhost:8000`. También funciona con GitHub Pages sirviendo la raíz de `main`.
 
 ## Qué incluye
 
-- **Tembo virtual:** rejilla 8×5 con Beats normales, volteados y apilados (30 Beats), 5 canales con mute, sample flip A/B, volumen, tono (±24), delay y reverb; filtro; tempo, swing y longitud de patrón; 4 loops de acompañamiento; sampler por micrófono; grabación de sesión.
+- **Instrumento virtual** con la disposición del modelo A-001: rejilla 8×5 con Beats normales, volteados y apilados (30 Beats); channel on/off; sample assign/flip; un dial de FX por canal, selector de FX y cantidad global; play/stop, grabación de sesión y dial de BPM/swing; selector de kit; 4 loops; sampler por micrófono; volumen; shift.
 - **Biblioteca:** 8 kits, 8 patrones de ejemplo, tus patrones guardados, exportar e importar en JSON.
 - **Canales:** cargar un archivo de audio o grabar en cualquier canal, y resamplear el patrón a un loop.
-- **Aprender:** 6 tutoriales interactivos, dos juegos y enlaces a los vídeos oficiales.
+- **Aprender:** 7 tutoriales interactivos, dos juegos y enlaces a vídeos.
 
 El estado se guarda en el navegador (localStorage; los samples propios, en IndexedDB).
 
+## Atajos
+
+- Arrastrar un dial hacia arriba o a la derecha sube el valor; doble clic lo restablece.
+- Volumen de canal: mantener el botón del canal (o la tecla 1–5) y girar Volumen, o arrastrar sobre el propio botón.
+- Shift: la pestaña del lateral izquierdo o la tecla Mayús. Shift + BPM = swing; Shift + selector de kit = pasos del patrón.
+- Espacio: play/stop. Clic derecho en una casilla: quitar el Beat.
+
 ## Qué es fiel y qué es interpretación
 
-La mecánica y las funciones salen de fuentes públicas: ver [docs/RESEARCH.md](docs/RESEARCH.md). No existe manual del diseño nuevo, así que esto lo he decidido yo:
+La posición y el nombre de cada control siguen el diagrama oficial; la mecánica sale de fuentes públicas: ver [docs/RESEARCH.md](docs/RESEARCH.md). Esto lo he decidido yo, porque no está documentado:
 
-- La asignación de cada botón del panel: mutes a la izquierda, sample flip a la derecha, el tercer botón de transporte como selector de kit, el botón inferior derecho como selector de efecto.
-- Que los diales de canal cambien de función por modos, y que la pantalla alterne BPM, swing y pasos.
+- Los cinco efectos del selector (delay, reverb, tono, gate, filtro), que actúe uno a la vez y lo que hace la cantidad global en cada uno.
+- Que Shift + BPM sea el swing y Shift + selector de kit, la longitud del patrón.
 - El contenido de los kits, los loops, los patrones, las lecciones y los juegos.
 
-No incluye MIDI, Wi-Fi/Bluetooth, la transferencia al Tembo físico ni los plug-ins.
+No incluye MIDI, Wi-Fi/Bluetooth, la transferencia al instrumento físico ni los plug-ins.
 
 ## Estructura
 
@@ -38,7 +45,7 @@ No incluye MIDI, Wi-Fi/Bluetooth, la transferencia al Tembo físico ni los plug-
 | `js/dsp.js` | Síntesis de los sonidos de percusión |
 | `js/kits.js` | Kits, loops y patrones |
 | `js/engine.js` | Motor Web Audio: secuenciador, efectos, sampler, grabación |
-| `js/device.js` | Tembo virtual en SVG y sus controles |
-| `js/main.js` | Panel del Studio |
+| `js/device.js` | Instrumento virtual en SVG y sus controles |
+| `js/main.js` | Panel lateral |
 | `js/learn.js` | Tutoriales, niveles y vídeos |
 | `js/store.js` | Estado y persistencia |

@@ -1,6 +1,6 @@
 import { S } from './dsp.js';
 
-// Filas de arriba abajo. Cada canal tiene dos samples conmutables (A/B), como el Tembo real.
+// Filas de arriba abajo. Cada canal tiene dos samples conmutables (A/B), como en el instrumento real.
 export const ROWS = 5, COLS = 8, MAX_BEATS = 30;
 const n = (name, spec) => ({ name, spec });
 

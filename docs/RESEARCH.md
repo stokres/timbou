@@ -1,4 +1,6 @@
-# Tembo (Musical Beings): investigación
+# Investigación: Tembo, de Musical Beings
+
+timbou recrea este instrumento. Este documento es el único sitio del repositorio donde se usa su nombre real, porque trata sobre él.
 
 Recopilado el 17-11-2026 a partir de fuentes públicas. La página de Kickstarter devuelve 403 a lectores automáticos, así que la campaña se ha reconstruido a través de la web oficial, el vídeo de demostración oficial y la prensa.
 
@@ -32,13 +34,32 @@ Tembo es un secuenciador por pasos, caja de ritmos y sampler de madera, de Music
 - **Grabación de sesión** con un botón (USB audio, salida estéreo o app).
 - Altavoz integrado (amplificador clase D), salida de auriculares de 3,5 mm con volumen propio y limitador.
 
-## Controles
+## Controles del modelo A-001
 
-Lista del panel superior en la web («Explore Tembo»): Instrument/Kit Selector, Beats / Stacked / Flipped, Sample Flip, Sampler, Play/Pause, Display, Record Session, Loops, Effects, Filter, Mute, Tempo, Speaker, Volume.
+Diagrama oficial etiquetado y boletín de septiembre de 2026 (el diseño definitivo de producción):
 
-Panel trasero: encendido, Mic/Line In, selector de entrada, USB 1 (alimentación/datos), USB 2 (MIDI), salida línea/auriculares.
+| Control | Dónde | Qué hace |
+|---|---|---|
+| Channel on/off | 5 botones a la izquierda de la rejilla | Enciende o apaga el canal. Mantenerlo mientras se gira Volume controla el volumen del canal |
+| Step indicator | 8 luces bajo la rejilla | Paso que suena |
+| Play/Stop | Botón verde | Transporte |
+| Record session | Botón con punto rojo | Graba la sesión |
+| BPM/Swing control | Dial pequeño junto a los dos botones | Tempo y swing |
+| Display | Pantalla numérica | Valores |
+| Kit selector | Dial grande con marcas | Elige el kit |
+| Loops on/off | 4 botones bajo el dial grande | Canales de loop |
+| Sampler | Botón en cápsula | Graba un sample |
+| Built-in mic | Punto junto al sampler | Micrófono integrado |
+| Sample assign/flip | 5 botones a la derecha de la rejilla | Asigna la grabación a un canal y alterna sus dos samples |
+| Channel FX dry-wet | 5 diales, uno por canal | Mezcla del efecto en ese canal |
+| FX selector | Dial con pico | Elige el efecto |
+| Global FX amount | Dial inferior derecho | Cantidad global del efecto |
+| Volume control | Dial superior derecho | Volumen general (y de canal, con Channel on/off mantenido) |
+| Shift | Botón en el lateral izquierdo | Funciones secundarias (no detalladas) |
 
-Del vídeo de demostración (prototipo anterior al rediseño): botón de play azul, botón de sampler naranja, dial grande de tempo con marcas, los kits se cambian con un dial («Switch between 8 sample packs»), los mutes encienden una luz roja junto a la fila, y la columna derecha tiene un dial por canal para los efectos.
+Arriba: doble USB MIDI, entrada Mic/Line/Instrument y altavoz. Detrás, un soporte plegable ligero. Carcasa de madera real sobre un chasis interno de precisión; diales color arena, botones blancos, play verde y columnas de la rejilla en dos tonos.
+
+Lista del panel en la web («Explore Tembo»): Instrument/Kit Selector, Beats / Stacked / Flipped, Sample Flip, Sampler, Play/Pause, Display, Record Session, Loops, Effects, Filter, Mute, Tempo, Speaker, Volume.
 
 ## Conectividad y hardware
 
@@ -51,19 +72,26 @@ Dos USB-C (MIDI con sincronía de reloj externo; alimentación y datos), Wi-Fi (
 - **Biblioteca principal anunciada:** TR-808, Acoustic Drums, Linn Drum, UK Clubs, Heavy Metal, Tablas, Dub, Indian Rhythms, Sounds of Cambodia, Roda de Samba, Balkan Beats, Caribbean Flow, Disco, Electro Soul. Packs de artista: Bongo Herman y Kumina.
 - **Actualización de noviembre de 2026:** el Studio Beta empieza en enero de 2027 y llega a todos los mecenas durante el primer trimestre. Incluye un Tembo virtual para explorar la biblioteca, tocar y crear patrones; tutoriales interactivos, juegos y vídeos de artistas; y creaciones transferibles al Tembo físico. También en el primer trimestre: plug-in de Tembo (mismo motor de audio, VST/AU y modo standalone) y plug-ins de efectos (delay, reverb, pitch, gate, filtros).
 
+## Calendario según los boletines
+
+- Septiembre de 2026: terminado el paso de las unidades Alpha a un producto fabricable (modelo A-001). Beta de hardware prevista para la segunda mitad de octubre, con plazas limitadas.
+- Noviembre de 2026: envío retrasado a mayo/junio de 2027. Studio Beta y plug-ins durante el primer trimestre de 2027.
+
 ## Qué no se sabe
 
-- Qué hace exactamente cada control del diseño nuevo (Model A-001): no hay manual público. En particular, cómo se elige entre volumen, tono y envíos con un solo dial por canal, y dónde están el swing y la longitud de patrón.
+- Qué efectos ofrece el FX selector y qué controla exactamente Global FX amount. Los plug-ins anunciados son delay, reverb, pitch, gate y filtros, y la web cita tono ±24 por canal.
+- Qué hace Shift con cada control, y dónde se ajusta la longitud del patrón.
+- Cómo se reparte BPM y swing en su dial.
 - El contenido de los 8 kits de fábrica y de los loops incluidos.
-- Qué muestra la pantalla de tres dígitos además del tempo.
 - Cómo será la interfaz real del Studio.
 
-Lo que esta recreación decide por su cuenta en esos puntos está listado en el README.
+Lo que timbou decide por su cuenta en esos puntos está listado en el README.
 
 ## Fuentes
 
 - https://www.musicalbeings.com/
 - Vídeo oficial «Tembo Features Demo» (enlazado en la web)
+- Boletines a mecenas de septiembre y noviembre de 2026, con el diagrama etiquetado del A-001
 - https://www.musicradar.com/music-tech/everyone-ive-shown-it-to-in-the-studio-becomes-obsessed-tembo-is-a-kid-friendly-magnetic-drum-machine-and-sampler-that-promises-unforgettable-family-jam-sessions
 - https://newatlas.com/music/tembo-step-sequencer-wood-musical-beings/
 - https://synthanatomy.com/2026/03/musical-beings-tembo-magnetic-this-magnetic-drum-machine-turns-the-whole-family-into-beatmakers.html

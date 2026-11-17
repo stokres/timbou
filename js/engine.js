@@ -39,51 +39,67 @@ export class Engine {
   build() {
     const c = this.ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
     const G = v => { const g = c.createGain(); g.gain.value = v; return g; };
+    const F = type => { const f = c.createBiquadFilter(); f.type = type; f.Q.value = 2.5; return f; };
     this.master = G(0.6);
-    this.lp = c.createBiquadFilter(); this.lp.type = 'lowpass'; this.lp.Q.value = 2;
-    this.hp = c.createBiquadFilter(); this.hp.type = 'highpass'; this.hp.Q.value = 2;
     const comp = c.createDynamicsCompressor();
     comp.threshold.value = -16; comp.ratio.value = 12; comp.attack.value = 0.003; comp.release.value = 0.12;
     this.out = G(0.8);
-    this.master.connect(this.lp).connect(this.hp).connect(comp).connect(this.out);
+    this.master.connect(comp).connect(this.out);
     this.out.connect(c.destination);
     try { this.recDest = c.createMediaStreamDestination(); this.out.connect(this.recDest); } catch { this.recDest = null; }
 
     this.delayIn = G(1); this.delay = c.createDelay(2);
-    const fb = G(0.42), fbLp = c.createBiquadFilter(); fbLp.type = 'lowpass'; fbLp.frequency.value = 3000;
-    this.delayIn.connect(this.delay); this.delay.connect(fbLp).connect(fb).connect(this.delay);
+    this.fb = G(0.42);
+    const fbLp = F('lowpass'); fbLp.Q.value = 0.7; fbLp.frequency.value = 3000;
+    this.delayIn.connect(this.delay); this.delay.connect(fbLp).connect(this.fb).connect(this.delay);
     this.delay.connect(G(0.8)).connect(this.master);
 
-    this.revIn = G(1);
-    const conv = c.createConvolver(), rate = c.sampleRate, ir = c.createBuffer(2, Math.floor(rate * 2.2), rate);
-    for (let ch = 0; ch < 2; ch++) {
-      const d = ir.getChannelData(ch);
-      for (let i = 0; i < d.length; i++) d[i] = i < 400 ? 0 : (Math.random() * 2 - 1) * Math.exp(-i / (rate * 0.5));
-    }
-    conv.buffer = ir;
-    this.revIn.connect(conv).connect(G(0.7)).connect(this.master);
+    this.revIn = G(1); this.conv = c.createConvolver();
+    this.setReverb(1.2);
+    this.revIn.connect(this.conv).connect(G(0.7)).connect(this.master);
 
+    // Por canal: entrada -> (seco | filtro) -> volumen -> master y envíos a delay/reverb.
     this.ch = Array.from({ length: ROWS }, () => {
-      const gain = G(0.6), dly = G(0), rev = G(0);
+      const inp = G(1), dry = G(1), lp = F('lowpass'), hp = F('highpass'), wet = G(0), gain = G(0.6), dly = G(0), rev = G(0);
+      inp.connect(dry).connect(gain); inp.connect(lp).connect(hp).connect(wet).connect(gain);
       gain.connect(this.master); gain.connect(dly).connect(this.delayIn); gain.connect(rev).connect(this.revIn);
-      return { gain, dly, rev };
+      return { inp, dry, lp, hp, wet, gain, dly, rev };
     });
     this.loopBus = G(0.6); this.loopBus.connect(this.master);
     this.loopBus.connect(G(0.15)).connect(this.revIn);
     this.apply();
   }
 
-  // Lleva el estado a los nodos de audio.
+  setReverb(decay) {
+    const rate = this.ctx.sampleRate, ir = this.ctx.createBuffer(2, Math.floor(rate * Math.min(5, decay * 4 + 0.3)), rate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = ir.getChannelData(ch);
+      for (let i = 0; i < d.length; i++) d[i] = i < 400 ? 0 : (Math.random() * 2 - 1) * Math.exp(-i / (rate * decay * 0.45));
+    }
+    this.conv.buffer = ir; this.revDecay = decay;
+  }
+
+  // Semitonos del canal cuando el efecto elegido es TONO: el dial global fija el intervalo (±24) y el del canal cuánto se aplica.
+  pitchOf(ch) { return state.fxSel === 2 ? Math.round((state.fxAmt - 0.5) * 48 * state.ch[ch].fx) : 0; }
+
+  // Lleva el estado a los nodos de audio. Solo actúa el efecto elegido con el selector de FX.
   apply() {
     if (!this.ctx) return;
     const t = this.ctx.currentTime, set = (p, v) => p.setTargetAtTime(v, t, 0.015);
+    const sel = state.fxSel, amt = state.fxAmt, f = (amt - 0.5) * 2;
     state.ch.forEach((c, i) => {
-      set(this.ch[i].gain.gain, c.mute ? 0 : c.vol * c.vol);
-      set(this.ch[i].dly.gain, c.delay); set(this.ch[i].rev.gain, c.reverb);
+      const n = this.ch[i], w = c.fx;
+      set(n.gain.gain, c.mute ? 0 : c.vol * c.vol);
+      set(n.dly.gain, sel === 0 ? w : 0); set(n.rev.gain, sel === 1 ? w : 0);
+      set(n.dry.gain, sel === 4 ? 1 - w : 1); set(n.wet.gain, sel === 4 ? w : 0);
+      set(n.lp.frequency, f < -0.03 ? 20000 * Math.pow(0.008, -f) : 20000);
+      set(n.hp.frequency, f > 0.03 ? 20 * Math.pow(250, f) : 20);
     });
-    const f = state.filter;
-    set(this.lp.frequency, f < -0.03 ? 20000 * Math.pow(0.008, -f) : 20000);
-    set(this.hp.frequency, f > 0.03 ? 20 * Math.pow(250, f) : 20);
+    if (sel === 0) set(this.fb.gain, 0.1 + amt * 0.75);
+    if (sel === 1) {
+      const decay = 0.3 + Math.round(amt * 10) / 10 * 2.2;
+      if (decay !== this.revDecay) { clearTimeout(this.revTimer); this.revTimer = setTimeout(() => this.setReverb(decay), 120); }
+    }
     set(this.out.gain, state.volume * state.volume);
     set(this.loopBus.gain, state.loopVol);
     set(this.delay.delayTime, Math.min(1.9, 3 * 60 / state.bpm / 4)); // corchea con puntillo
@@ -124,8 +140,13 @@ export class Engine {
     const b = this.buf[ch]?.[side];
     if (!b || !this.ctx) return;
     const src = this.ctx.createBufferSource();
-    src.buffer = b; src.playbackRate.value = Math.pow(2, state.ch[ch].pitch / 12);
-    src.connect(this.ch[ch].gain); src.start(time ?? this.ctx.currentTime);
+    const t = time ?? this.ctx.currentTime, w = state.ch[ch].fx;
+    src.buffer = b; src.playbackRate.value = Math.pow(2, this.pitchOf(ch) / 12);
+    if (state.fxSel === 3 && w > 0.02) { // GATE: recorta la cola del sample
+      const len = (0.03 + state.fxAmt * 0.4) * (1 + (1 - w) * 6), g = this.ctx.createGain();
+      g.gain.setValueAtTime(1, t); g.gain.setValueAtTime(1, t + len); g.gain.linearRampToValueAtTime(0, t + len + 0.015);
+      src.connect(g).connect(this.ch[ch].inp); src.start(t); src.stop(t + len + 0.03);
+    } else { src.connect(this.ch[ch].inp); src.start(t); }
   }
 
   note(time, midi, dur, tim) {
@@ -268,7 +289,7 @@ export class Engine {
         const v = state.grid[r][col], c = state.ch[r];
         if (c.mute || !(v === 3 || (v === 1 && !sub) || (v === 2 && sub))) continue;
         const src = oc.createBufferSource(), g = oc.createGain();
-        src.buffer = this.buf[r][c.side]; src.playbackRate.value = Math.pow(2, c.pitch / 12);
+        src.buffer = this.buf[r][c.side]; src.playbackRate.value = Math.pow(2, this.pitchOf(r) / 12);
         g.gain.value = c.vol * c.vol; src.connect(g).connect(oc.destination); src.start(tt);
       }
     }
@@ -285,7 +306,7 @@ export class Engine {
     rec.onstop = () => {
       const blob = new Blob(chunks, { type: rec.mimeType }), a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `tembo-sesion-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.${rec.mimeType.includes('ogg') ? 'ogg' : 'webm'}`;
+      a.download = `timbou-sesion-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.${rec.mimeType.includes('ogg') ? 'ogg' : 'webm'}`;
       a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
       this.sessionRec = null; this.onChange();
     };
